@@ -30,7 +30,10 @@ export class LlmController {
 
         this.embeddings = new OllamaEmbeddings({
             // baseUrl: process.env.OPENAI_API_BASE || 'http://localhost:11434/v1',
-            model: 'nomic-embed-text-v1'
+            model: 'nomic-embed-text',
+            requestOptions: {
+                keepAlive: '15m'
+            }
         });
 
         this.prepareEmbeddings();
@@ -43,12 +46,13 @@ export class LlmController {
 
         const docs = await loader.load();
         const textSplitter = new RecursiveCharacterTextSplitter({
-            chunkSize: 1000,
-            chunkOverlap: 200
+            chunkSize: 100,
+            chunkOverlap: 20
         });
-        const docsSplit = await textSplitter.splitDocuments(docs);
+        let docsSplit = await textSplitter.splitDocuments(docs);
         // add console log with datetime
         console.log(`${new Date().toISOString()} Loaded ${docsSplit.length} documents`);
+        docsSplit = docsSplit.splice(0, 10000); // 31720
         const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
         console.log(`${new Date().toISOString()} From ${docsSplit.length} documents, created ${vectorStore.index.ntotal} vectors`);
         await vectorStore.save(`${this.docStore}`);
