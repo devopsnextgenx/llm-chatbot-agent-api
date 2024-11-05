@@ -152,7 +152,7 @@ const getUnit = function (type) {
 
 const generateQuery = function () {
     const query = generateChatPrompt({
-        operationType: 'FacingOperation',
+        operationType: 'ContouringOperation',
         mlNumberOfFaces: 2, mlNumberOfEdges: 12,
         mlSurfaceArea: 10, mlPerimeter: 14, mlLength: 4, mlWidth: 1.5, mlDepth: 1,
         mlSmallestRadius: 0.2,

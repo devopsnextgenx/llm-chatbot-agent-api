@@ -10,9 +10,9 @@ export class MachiningExpertChain {
     private outputFixingParser: OutputFixingParser<any>;
     constructor(llama: ChatOllama, outputFixingParser: OutputFixingParser<any>) {
         this.llama = llama;
+        this.outputFixingParser = outputFixingParser;
         this.promptTemplate = this.createPromptTemplate();
         this.chain = this.createChain(outputFixingParser);
-        this.outputFixingParser = outputFixingParser;
     }
 
     createPromptTemplate() {
@@ -37,7 +37,7 @@ export class MachiningExpertChain {
     createChain(outputFixingParser: OutputFixingParser<any>) {
         return new LLMChain({
             llm: this.llama,
-            outputKey: 'params',
+            outputKey: 'xoutput',
             outputParser: outputFixingParser,
             prompt: this.promptTemplate
         });

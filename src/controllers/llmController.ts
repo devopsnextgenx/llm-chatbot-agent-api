@@ -1,4 +1,4 @@
-
+import fs from 'fs';
 import express, { Request, Response } from 'express';
 import { json } from 'body-parser';
 import { ChatOllama, OllamaEmbeddings } from "@langchain/ollama";
@@ -39,24 +39,25 @@ export class LlmController {
         this.prepareEmbeddings();
     }
 
-    private async prepareEmbeddings() {
-        const loader = new DirectoryLoader(`${this.docStore}/PDFs`, {
-            '.pdf': (path) => new PDFLoader(path)
-        });
+    private async prepareEmbeddings(force: boolean = false) {
+        if (!fs.existsSync(`${this.docStore}/faiss.index`) || force) {
+            const loader = new DirectoryLoader(`${this.docStore}/PDFs`, {
+                '.pdf': (path) => new PDFLoader(path)
+            });
 
-        const docs = await loader.load();
-        const textSplitter = new RecursiveCharacterTextSplitter({
-            chunkSize: 100,
-            chunkOverlap: 20
-        });
-        let docsSplit = await textSplitter.splitDocuments(docs);
-        // add console log with datetime
-        console.log(`${new Date().toISOString()} Loaded ${docsSplit.length} documents`);
-        docsSplit = docsSplit.splice(0, 10000); // 31720
-        const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
-        console.log(`${new Date().toISOString()} From ${docsSplit.length} documents, created ${vectorStore.index.ntotal} vectors`);
-        await vectorStore.save(`${this.docStore}`);
-        console.log(`${new Date().toISOString()} Saved vector store to ${this.docStore}`);
+            const docs = await loader.load();
+            const textSplitter = new RecursiveCharacterTextSplitter({
+                chunkSize: 1000,
+                chunkOverlap: 200
+            });
+            let docsSplit = await textSplitter.splitDocuments(docs);
+            console.log(`${new Date().toISOString()} Loaded ${docsSplit.length} documents`);
+            docsSplit = docsSplit.splice(0, 800); // 31720 loading partially as unable to load complete document
+            const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
+            console.log(`${new Date().toISOString()} From ${docsSplit.length} documents, created ${vectorStore.index.ntotal} vectors`);
+            await vectorStore.save(`${this.docStore}`);
+            console.log(`${new Date().toISOString()} Saved vector store to ${this.docStore}`);
+        }
         this.faissStore = await FaissStore.load(`${this.docStore}`, this.embeddings);
         console.log(`${new Date().toISOString()} Loaded vector store from ${this.docStore}`);
     }
@@ -64,7 +65,7 @@ export class LlmController {
     public setRoutes() {
         const routes = express.Router();
 
-        routes.post('/chat', json(), async (req: Request, res: Response) => {
+        routes.post('/getToolSuggestion', json(), async (req: Request, res: Response) => {
             const body = req.body;
             const { query, output } = body;
 
@@ -82,12 +83,13 @@ export class LlmController {
 
             const outputFixingParser = OutputFixingParser.fromLLM(this.llama, outputParser);
 
+            // console.log(outputFixingParser);
             const expertChain = new MachiningExpertChain(this.llama, outputFixingParser);
             const result: ChainValues = await expertChain.getResponse(chatContext, query);
             // tslint:disable-next-line:no-console
-            console.log(result.xoutputKey);
+            console.log(result.xoutput);
             res.json({
-                message: result.xoutputKey
+                suggestedTool: result.xoutput
             });
         });
         return routes;
