@@ -2,7 +2,7 @@ POST http://localhost:3000/api/llm/getToolSuggestion
 Content-Type: application/json
 
 {
-    "query": "Which tool of what dimensions would you pick to mill 2 faces of 10 in2, dimensions of 4 in by 1.5 in, a perimeter of 14 in, a stock thickness of 1.5 in, and a depth per cut of 0.2 in? In your response make sure to include the diameter, flute length, and overall length.",
+    "query": "Which tool of what dimensions would you pick to mill 2 faces of 10 in2, dimensions of 4 in by 1.5 in, a perimeter of 14 in, a stock thickness of 1.5 in, and a depth per cut of 0.2 in? In your response make sure to include the diameter, flute length, and overall length, while returning tool diamentions, only use decimal places instead of fractions.",
     "output": [{
         "key": "TlDiameterBuilder",
         "type": "number",
@@ -28,7 +28,7 @@ POST http://localhost:3000/api/llm/getToolSuggestion
 Content-Type: application/json
 
 {
-    "query": "Which tool of what dimensions would you pick to mill a contour of 2 walls, with a depth of 1 in, dimensions of 4 in by 1.5 in, and a smallest internal radius of 0.2 in? In your response make sure to include the diameter, flute length, and overall length. while returning tool diamentions, only use decimal places instead of fractions.",
+    "query": "Which tool of what dimensions would you pick to mill a contour of 2 walls, with a depth of 1 in, dimensions of 4 in by 1.5 in, and a smallest internal radius of 0.2 in? In your response make sure to include the diameter, flute length, and overall length, while returning tool diamentions, only use decimal places instead of fractions.",
     "output": [{
         "key": "TlDiameterBuilder",
         "type": "number",
@@ -49,3 +49,20 @@ Content-Type: application/json
 }
 
 ### 
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 112
+ETag: W/"70-BWpMxhP15sovja3nyLVNW9DTIs8"
+Date: Tue, 05 Nov 2024 23:43:31 GMT
+Connection: close
+
+{
+  "suggestedTool": {
+    "TlDiameterBuilder": 4,
+    "TlFluteLnBuilder": 0.125,
+    "TlHeightBuilder": 1,
+    "toolType": "FaceMillTool"
+  }
+}
