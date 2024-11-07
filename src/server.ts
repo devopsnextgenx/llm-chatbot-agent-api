@@ -1,11 +1,11 @@
 // add express server code and start the server
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 
 // Import routes
 import llmRoutes from './routes/llmRoutes';
 
+import dotenv from 'dotenv';
 dotenv.config();
 
 const app = express();

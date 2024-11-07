@@ -12,6 +12,8 @@ import { getZodType } from '../utils/zodUtils';
 import { MachiningExpertChain } from '../utils/machiningExpertChain';
 import { ChainValues } from '@langchain/core/utils/types';
 
+import dotenv from 'dotenv';
+dotenv.config();
 
 export class LlmController {
     private llama: ChatOllama;
@@ -35,8 +37,7 @@ export class LlmController {
                 keepAlive: '15m'
             }
         });
-
-        this.prepareEmbeddings();
+        this.prepareEmbeddings(process.env.FORCE_EMBEDDINGS === 'true');
     }
 
     private async prepareEmbeddings(force: boolean = false) {
@@ -48,14 +49,34 @@ export class LlmController {
             const docs = await loader.load();
             const textSplitter = new RecursiveCharacterTextSplitter({
                 chunkSize: 1000,
-                chunkOverlap: 200
+                chunkOverlap: 50
             });
             let docsSplit = await textSplitter.splitDocuments(docs);
             console.log(`${new Date().toISOString()} Loaded ${docsSplit.length} documents`);
-            docsSplit = docsSplit.splice(0, 800); // 31720 loading partially as unable to load complete document
-            const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
-            console.log(`${new Date().toISOString()} From ${docsSplit.length} documents, created ${vectorStore.index.ntotal} vectors`);
-            await vectorStore.save(`${this.docStore}`);
+            // docsSplit = docsSplit.splice(0, 800); // 17091 loading partially as unable to load complete document
+            // const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
+            let index = 0, endIndex = 0;
+            let batchSize = 25;
+            let vectorStore: FaissStore|undefined = undefined;
+            while (endIndex < docsSplit.length) {
+                let startIndex = index * batchSize;
+                endIndex = batchSize * (index + 1);
+                endIndex = endIndex > docsSplit.length ? docsSplit.length : endIndex;
+                console.log(`${new Date().toISOString()} Loading ${endIndex} documents`);
+                let docsSplitLoad = docsSplit.slice(startIndex, endIndex + 1);
+                let tmpVectorStore = await FaissStore.fromDocuments(docsSplitLoad, this.embeddings);
+                if (vectorStore === undefined) {
+                    vectorStore = tmpVectorStore;
+                } else {
+                    vectorStore.mergeFrom(tmpVectorStore);
+                }
+
+                index++;
+            }
+            console.log(`${new Date().toISOString()} From ${docsSplit.length} documents, created ${vectorStore?.index.ntotal} vectors`);
+
+
+            await vectorStore?.save(`${this.docStore}`);
             console.log(`${new Date().toISOString()} Saved vector store to ${this.docStore}`);
         }
         this.faissStore = await FaissStore.load(`${this.docStore}`, this.embeddings);
