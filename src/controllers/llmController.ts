@@ -25,7 +25,7 @@ export class LlmController {
         this.docStore = './docs';
         this.llama = new ChatOllama({
             // baseUrl: process.env.OPENAI_API_BASE || 'http://localhost:11434/v1',
-            model: 'llama3.2:latest',
+            model: 'qwen2.5-coder:latest',
             temperature: 0.7
 
         });
@@ -34,7 +34,7 @@ export class LlmController {
             // baseUrl: process.env.OPENAI_API_BASE || 'http://localhost:11434/v1',
             model: 'nomic-embed-text',
             requestOptions: {
-                keepAlive: '15m'
+                keepAlive: '1h'
             }
         });
         this.prepareEmbeddings(process.env.FORCE_EMBEDDINGS === 'true');
@@ -48,15 +48,13 @@ export class LlmController {
 
             const docs = await loader.load();
             const textSplitter = new RecursiveCharacterTextSplitter({
-                chunkSize: 1000,
-                chunkOverlap: 50
+                chunkSize: 500,
+                chunkOverlap: 15
             });
             let docsSplit = await textSplitter.splitDocuments(docs);
             console.log(`${new Date().toISOString()} Loaded ${docsSplit.length} documents`);
-            // docsSplit = docsSplit.splice(0, 800); // 17091 loading partially as unable to load complete document
-            // const vectorStore = await FaissStore.fromDocuments(docsSplit, this.embeddings);
             let index = 0, endIndex = 0;
-            let batchSize = 25;
+            let batchSize = 5;
             let vectorStore: FaissStore|undefined = undefined;
             while (endIndex < docsSplit.length) {
                 let startIndex = index * batchSize;

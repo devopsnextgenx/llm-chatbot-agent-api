@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "build": "gulp build",
-    "start": "nodemon --watch src -e ts --exec ts-node-dev --respawn src/server.ts",
+    "start": "export PORT=4000 && nodemon --watch src -e ts --exec ts-node-dev --respawn src/server.ts",
     "test": "node test/ollamaChat.js"
   },
   "keywords": [],

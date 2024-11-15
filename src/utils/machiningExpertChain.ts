@@ -44,9 +44,8 @@ export class MachiningExpertChain {
     }
 
     async getResponse(chatContext: any, query: string) {
-        const contextString = this.formatContext(chatContext);
         return await this.chain.call({
-            context: contextString,
+            context: chatContext,
             query
         });
     }
